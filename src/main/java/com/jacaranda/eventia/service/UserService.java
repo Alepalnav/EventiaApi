@@ -12,6 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.jacaranda.eventia.dto.EventDTO;
+import com.jacaranda.eventia.dto.NotificationDTO;
 import com.jacaranda.eventia.dto.RegisterDTO;
 import com.jacaranda.eventia.dto.UserDTO;
 import com.jacaranda.eventia.exception.ExceptionCredentialNotValid;
@@ -97,6 +99,12 @@ public class UserService implements UserDetailsService {
 	
 	public List<UserDTO> getUserByEmailDTO(String email) {
 		return UserDTO.convertUserToDTO(userRepository.findByEmail(email));
+	}
+	
+	public UserDTO getUser(Integer id) {
+		User user = userRepository.findById(id).orElse(null);
+		UserDTO userDTO = new UserDTO(id,user.getName(),user.getEmail(),user.getRole(),EventDTO.convertEventToDTO(user.getEvents()),NotificationDTO.convertOrderToDTO(user.getNotifications()));
+		return userDTO;
 	}
 	
 }

@@ -49,6 +49,20 @@ public class UserDTO {
 		this.email = email;
 		this.role = role;
 	}
+	
+	
+
+
+	public UserDTO(Integer id, String name, String email, String role, List<EventDTO> events,
+			List<NotificationDTO> notifications) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.email = email;
+		this.role = role;
+		this.events = events;
+		this.notifications = notifications;
+	}
 
 
 	public UserDTO(Integer id, String name, String email, String password, String role, List<EventDTO> events,

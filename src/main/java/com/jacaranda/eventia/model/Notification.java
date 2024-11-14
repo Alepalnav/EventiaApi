@@ -42,6 +42,15 @@ public class Notification {
 		this.event = event;
 		this.message = message;
 	}
+	
+	
+
+	public Notification(User user, Event event, String message) {
+		super();
+		this.user = user;
+		this.event = event;
+		this.message = message;
+	}
 
 	public Integer getId() {
 		return id;
