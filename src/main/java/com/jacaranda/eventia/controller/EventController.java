@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +22,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import com.jacaranda.eventia.dto.EventDTO;
+import com.jacaranda.eventia.dto.ParticipationDTO;
 import com.jacaranda.eventia.dto.UserDTO;
 import com.jacaranda.eventia.exception.ElementNotFoundException;
+import com.jacaranda.eventia.exception.ElementNotFoundIntException;
 import com.jacaranda.eventia.exception.ExceptionPageNotFound;
 import com.jacaranda.eventia.service.EventService;
 
@@ -116,7 +119,7 @@ public class EventController {
 	
 	
 	@GetMapping("/participants/{id}")
-	public ResponseEntity<?> getParticipants(@PathVariable String id){
+	public ResponseEntity<List<UserDTO>> getParticipants(@PathVariable String id){
 		
 		List<UserDTO> lista = eventService.getParticipants(id);
 		if(lista==null) {
@@ -124,6 +127,16 @@ public class EventController {
 		}else {
 			return ResponseEntity.ok(lista);
 		}
+	}
+	
+	@DeleteMapping("/event/{id}")
+	public ResponseEntity<?> delete(@PathVariable Integer id){
+		EventDTO eventDTO = eventService.delete(id);
+		if(eventDTO==null){
+			throw new ElementNotFoundIntException(id);
+    	}else {
+    		return ResponseEntity.status(201).body(eventDTO);
+    	}
 	}
 	
 

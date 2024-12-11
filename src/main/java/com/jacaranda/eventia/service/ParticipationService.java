@@ -1,8 +1,11 @@
 package com.jacaranda.eventia.service;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 
@@ -17,6 +20,9 @@ import com.jacaranda.eventia.repository.EventRepository;
 import com.jacaranda.eventia.repository.ParticipationRepository;
 import com.jacaranda.eventia.repository.UserRepository;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
 @Service
 public class ParticipationService {
 	
@@ -28,6 +34,9 @@ public class ParticipationService {
 	
 	@Autowired
 	EventRepository eventRepository;
+	
+	@Autowired
+	private JavaMailSender mailSender;
 	
 	EventService eventService;
 	
@@ -76,6 +85,7 @@ public class ParticipationService {
 				String idString = Integer.toString(participationDTO.getEvent());
 				event = new Event(participationDTO.getEvent(), user, event.getTitle(), event.getDescrip(), event.getDate_start(), event.getDate_finish(), event.getHour_start(), event.getHour_finish(), event.getPlace(),event.getCategory(),event.getMax_participant(),event.getParticipants(),event.getAvailable());
 				eventRepository.save(event);
+				participationEmail(user, event);
 				Participation participation = new Participation(getUser(participationDTO.getUser()),getEvent(participationDTO.getEvent())); 
 				participationRepository.save(participation);
 				ParticipationDTO newParticipationDTO = new ParticipationDTO(participation.getUser().getId(),participation.getEvent().getId()); 
@@ -88,6 +98,7 @@ public class ParticipationService {
 				Integer participantes = event.getParticipants() + 1;
 				event = new Event(participationDTO.getEvent(), user, event.getTitle(), event.getDescrip(), event.getDate_start(), event.getDate_finish(), event.getHour_start(), event.getHour_finish(), event.getPlace(),event.getCategory(),event.getMax_participant(),participantes,event.getAvailable());
 				eventRepository.save(event);
+				participationEmail(user, event);
 				Participation participation = new Participation(getUser(participationDTO.getUser()),getEvent(participationDTO.getEvent())); 
 				participationRepository.save(participation);
 				return participationDTO;				
@@ -96,6 +107,28 @@ public class ParticipationService {
 			}			
 		}
 	}
+	
+	private void participationEmail(User user, Event event)
+			throws MessagingException, UnsupportedEncodingException {
+					String toAddress = user.getEmail();
+					String fromAddress = "alepalma211n@gmail.com";
+					String senderName = "Eventia";
+					String subject = "Eventia participation";
+					String content = "Dear [[username]],<br>" + "you've been participate in [[event]]. <br>"+"Enjoy the experience!";
+					
+					MimeMessage message = mailSender.createMimeMessage();
+					MimeMessageHelper helper = new MimeMessageHelper(message);
+					
+					helper.setFrom(fromAddress, senderName);
+					helper.setTo(toAddress);
+					helper.setSubject(subject);
+					
+					content = content.replace("[[username]]", user.getName());
+					content = content.replace("[[event]]", event.getTitle());
+					
+					helper.setText(content, true);
+					mailSender.send(message);
+				}
 	
 	public ParticipationDTO delete(Integer idUser, Integer idEvent) {
 		User user = userRepository.findById(idUser).orElse(null);
@@ -113,7 +146,7 @@ public class ParticipationService {
 			try {
 				event = new Event(idEvent, user, event.getTitle(), event.getDescrip(), event.getDate_start(), event.getDate_finish(), event.getHour_start(), event.getHour_finish(), event.getPlace(),event.getCategory(),event.getMax_participant(),event.getParticipants()-1,event.getAvailable());
 				eventRepository.save(event);
-				participationRepository.delete(participation);;
+				participationRepository.delete(participation);
 				ParticipationDTO participationDTO = new ParticipationDTO(participation.getUser().getId(),participation.getEvent().getId());
 				return participationDTO;				
 			}catch(Exception e) {
@@ -122,6 +155,13 @@ public class ParticipationService {
 		}else {
 			return null;
 		}
+	}
+	
+	public boolean isUserParticipating(Integer eventId, Integer userId) {
+		User user = getUser(userId);
+		Event event = getEvent(eventId);
+		
+	    return participationRepository.existsByEventAndUser(event, user);
 	}
 
 }

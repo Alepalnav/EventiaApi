@@ -68,7 +68,6 @@ public class User implements UserDetails{
 		this.role = role;
 	}
 	
-	
 
 	public Integer getId() {
 		return id;

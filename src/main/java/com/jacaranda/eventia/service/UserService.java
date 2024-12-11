@@ -107,4 +107,24 @@ public class UserService implements UserDetailsService {
 		return userDTO;
 	}
 	
+	public List<UserDTO> getUsers(){
+		return UserDTO.convertUserToDTO(userRepository.findAll());
+	}
+	
+	public UserDTO changeRol(Integer id) {
+		User user = userRepository.findById(id).orElse(null);
+		String rol = user.getRole();
+		if(rol.equals("org")) {
+			rol = "user";
+		}else if(rol.equals("user")){
+			rol = "org";
+		}else {
+			rol = "admin";
+		}
+		User newUser = new User(id,user.getName(),user.getEmail(),user.getPassword(),rol);
+		userRepository.save(newUser);
+		UserDTO userDTO = new UserDTO(id,user.getName(),user.getEmail(),rol);
+		return userDTO;
+	}
+	
 }

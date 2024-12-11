@@ -1,8 +1,12 @@
 package com.jacaranda.eventia.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class ParticipationId {
+import jakarta.persistence.Embeddable;
+
+@Embeddable
+public class ParticipationId implements Serializable{
 	
 	private Integer user;
 	
@@ -15,6 +19,22 @@ public class ParticipationId {
 	public ParticipationId(Integer user, Integer event) {
 		super();
 		this.user = user;
+		this.event = event;
+	}
+
+	public Integer getUser() {
+		return user;
+	}
+
+	public void setUser(Integer user) {
+		this.user = user;
+	}
+
+	public Integer getEvent() {
+		return event;
+	}
+
+	public void setEvent(Integer event) {
 		this.event = event;
 	}
 

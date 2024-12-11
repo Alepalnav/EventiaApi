@@ -5,7 +5,9 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +25,16 @@ import com.jacaranda.eventia.dto.RatingDTO;
 import com.jacaranda.eventia.dto.UserDTO;
 import com.jacaranda.eventia.exception.ExceptionValueNotRight;
 import com.jacaranda.eventia.model.Event;
+import com.jacaranda.eventia.model.Notification;
 import com.jacaranda.eventia.model.Participation;
+import com.jacaranda.eventia.model.ParticipationId;
 import com.jacaranda.eventia.model.User;
 import com.jacaranda.eventia.repository.EventRepository;
+import com.jacaranda.eventia.repository.NotificationRepository;
+import com.jacaranda.eventia.repository.ParticipationRepository;
 import com.jacaranda.eventia.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
 
 
 
@@ -38,9 +46,16 @@ public class EventService {
 	
 	@Autowired
 	UserRepository userRepository;
+	
+	@Autowired
+	NotificationRepository notificationRepository;
+	
+	@Autowired
+	ParticipationRepository participationRepository;
 
 	@Autowired
 	ParticipationService participationService;
+	
 //	public List<EventDTO> getEvents(){
 //		try {
 //			List<Event> list = eventRepository.findAll();
@@ -49,7 +64,6 @@ public class EventService {
 //			throw new ExceptionValueNotRight("Orders doesn´t exists");
 //		}
 //	}
-	
 	public Page<EventDTO> findAllPages(String numPage, String pageSize, String order, String ad){
 		Pageable pageable = null;
 		
@@ -91,6 +105,10 @@ public class EventService {
 		Page<EventDTO> result = temp.map(event -> new EventDTO(event.getId(),event.getUser().getId(),event.getTitle(),event.getDescrip(),event.getDate_start(),event.getDate_finish(),event.getHour_start(),event.getHour_finish(),event.getPlace(),event.getCategory(),event.getMax_participant(),event.getParticipants(),event.getAvailable()));
 	    return result;
 	}
+
+
+
+
 	
 	public User getUser(Integer id) {
 		return userRepository.findById(id).orElse(null);
@@ -112,7 +130,7 @@ public class EventService {
 	        	eventDTO.getDescrip() == null || eventDTO.getDescrip().isEmpty() ||
 	        	eventDTO.getDate_start() == null || eventDTO.getDate_start().toLocalDate().isBefore(LocalDate.now()) ||
 	        	eventDTO.getDate_finish() == null || eventDTO.getDate_finish().toLocalDate().isBefore(eventDTO.getDate_start().toLocalDate()) || 
-	        	eventDTO.getHour_start() == null ||	eventDTO.getHour_start().isAfter(eventDTO.getHour_finish()) ||
+	        	eventDTO.getHour_start() == null  ||
 	        	eventDTO.getHour_finish() == null ||
 	        	eventDTO.getPlace() == null ||
 	        	eventDTO.getCategory() == null ||
@@ -239,7 +257,8 @@ public class EventService {
 		Integer idUser = Integer.valueOf(id);
 		User user = getUser(idUser);
 
-		List<Event>events = user.getEvents();
+//		List<Event>events = user.getEvents();
+		List<Event>events = eventRepository.findByUserAndAvailable(user, 1);
 		return EventDTO.convertEventToDTO(events);
 		
 	}
@@ -258,6 +277,67 @@ public class EventService {
 		return UserDTO.convertUserToDTO(result);
 		
 	}
+	
+	@Transactional
+	public EventDTO delete(Integer id) {
+	    Event event = eventRepository.findById(id).orElse(null);
+
+	    if (event == null) {
+	        return null;
+	    }
+
+	    LocalDate todayDate = LocalDate.now();
+	    LocalTime currentTime = LocalTime.now();
+
+	    if (event.getDate_finish().toLocalDate().isAfter(todayDate) || 
+	        (event.getDate_finish().toLocalDate().isEqual(todayDate) && event.getHour_finish().isAfter(currentTime))) {
+	        try {
+	            String mensaje = "Se ha eliminado el siguiente evento en el que participabas: " + event.getTitle();
+
+	            if (event.getParticipations() != null && !event.getParticipations().isEmpty()) {
+	                for (Participation participation : new ArrayList<>(event.getParticipations())) {
+	                    if (participation.getUser() != null) {
+	                        User user = participation.getUser();
+
+	                        Notification notification = new Notification(user, event, mensaje);
+	                        notificationRepository.save(notification);
+	                    }
+	                    participation.setEvent(null); // Desvincular
+	                    participationRepository.delete(participation); // Eliminar
+	                }
+	                event.getParticipations().clear(); // Limpiar las participaciones del evento
+	            }
+
+	            event.setParticipants(event.getParticipants() - 1);
+	            event.setAvailable(0);
+	            eventRepository.save(event);
+
+	            return new EventDTO(
+	                event.getId(),
+	                event.getUser().getId(),
+	                event.getTitle(),
+	                event.getDescrip(),
+	                event.getDate_start(),
+	                event.getDate_finish(),
+	                event.getHour_start(),
+	                event.getHour_finish(),
+	                event.getPlace(),
+	                event.getCategory(),
+	                event.getMax_participant(),
+	                event.getParticipants(),
+	                event.getAvailable()
+	            );
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return null;
+	        }
+	    } else {
+	        return null;
+	    }
+	}
+
+
+
 	
 	
 	

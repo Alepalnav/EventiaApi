@@ -1,18 +1,17 @@
 package com.jacaranda.eventia.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.jacaranda.eventia.model.Event;
-import com.jacaranda.eventia.model.Participation;
 import com.jacaranda.eventia.model.ParticipationId;
+import com.jacaranda.eventia.model.Rating;
 import com.jacaranda.eventia.model.User;
 
-import java.util.List;
-
-
-public interface ParticipationRepository extends JpaRepository<Participation, ParticipationId> {
+public interface ValorationRepository extends JpaRepository<Rating, ParticipationId>{
 	
-	List<Participation> findByUser(User user);
+	List<Rating> findByUser(User user);
 	
 	boolean existsByEventAndUser(Event event, User user);
 
