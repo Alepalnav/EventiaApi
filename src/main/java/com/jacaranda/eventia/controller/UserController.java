@@ -37,6 +37,8 @@ public class UserController {
 		}
 	}
 	
+	/*prueba*/
+	
 	@GetMapping("/users")
 	public List<UserDTO> listUsers(){
 		return userService.getUsers();
