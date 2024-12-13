@@ -21,7 +21,7 @@ public class EventiaApiAlepalnavApplication {
         @Override
         public void addCorsMappings(CorsRegistry registry) {
             registry.addMapping("/**")
-                .allowedOrigins("http://localhost:4200/", "http://render.com","https://sneaker-land.vercel.app")
+                .allowedOrigins("http://localhost:4200/", "http://render.com","https://eventia-front.vercel.app")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "HEAD")
                 .allowCredentials(true);
         }
